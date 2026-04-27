@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { BookOpen, Trophy, PenTool, BarChart3, Flame, ChevronRight, Mic } from "lucide-react";
 import type { UserProgress } from "../utils/storage";
 import { isCheckedInToday } from "../utils/storage";
@@ -14,6 +15,14 @@ export default function HomePage({ progress, onNavigate }: HomePageProps) {
   const learnedCount = progress.learnedWords.length;
   const masteredCount = progress.masteredWords.length;
   const learnPercent = Math.round((learnedCount / totalWords) * 100);
+
+  useEffect(() => {
+    const script = document.createElement("script");
+    script.src = "//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js";
+    script.async = true;
+    document.body.appendChild(script);
+    return () => { document.body.removeChild(script); };
+  }, []);
 
   return (
     <div className="min-h-[100dvh]" style={{ background: "#f0f2f5" }}>
@@ -214,6 +223,13 @@ export default function HomePage({ progress, onNavigate }: HomePageProps) {
           </div>
           <ChevronRight style={{ width: 22, height: 22, color: "rgba(255,255,255,0.8)" }} />
         </button>
+      </div>
+
+      {/* 访客统计 */}
+      <div style={{ textAlign: "center", padding: "20px 0 32px", fontSize: 12, color: "#b0b8c8" }}>
+        <span>本站总访问 <span id="busuanzi_value_site_pv" style={{ color: "#6366f1", fontWeight: 600 }}>--</span> 次</span>
+        <span style={{ margin: "0 10px" }}>|</span>
+        <span>访客 <span id="busuanzi_value_site_uv" style={{ color: "#6366f1", fontWeight: 600 }}>--</span> 人</span>
       </div>
     </div>
   );
