@@ -11,6 +11,7 @@ import MatchGame from "./components/MatchGame";
 import SpellingGame from "./components/SpellingGame";
 import EmojiGame from "./components/EmojiGame";
 import BattleGame from "./components/BattleGame";
+import DressUpGame from "./components/DressUpGame";
 
 function App() {
   const [page, setPage] = useState("home");
@@ -54,6 +55,9 @@ function App() {
       )}
       {page === "battleGame" && (
         <BattleGame onBack={goHome} />
+      )}
+      {page === "dressUpGame" && (
+        <DressUpGame onBack={goHome} />
       )}
     </div>
   );

@@ -202,7 +202,7 @@ export default function HomePage({ progress, onNavigate }: HomePageProps) {
         <div style={{ fontSize: 17, fontWeight: 800, color: "#1a1a2e", marginTop: 20, marginBottom: 10 }}>
           🎮 趣味学习
         </div>
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr 1fr", gap: 10 }}>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 10 }}>
           <button onClick={() => onNavigate("matchGame")} style={{
             background: "#fff", border: "none", borderRadius: 16, padding: "16px 8px",
             boxShadow: "0 1px 8px rgba(0,0,0,0.04)", textAlign: "center",
@@ -234,6 +234,14 @@ export default function HomePage({ progress, onNavigate }: HomePageProps) {
             <div style={{ fontSize: 30, marginBottom: 6 }}>⚔️</div>
             <div style={{ fontSize: 13, fontWeight: 700, color: "#1a1a2e" }}>大冒险</div>
             <div style={{ fontSize: 10, color: "#94a3b8", marginTop: 2 }}>打怪闯关</div>
+          </button>
+          <button onClick={() => onNavigate("dressUpGame")} style={{
+            background: "#fff", border: "none", borderRadius: 16, padding: "16px 8px",
+            boxShadow: "0 1px 8px rgba(0,0,0,0.04)", textAlign: "center",
+          }}>
+            <div style={{ fontSize: 30, marginBottom: 6 }}>👗</div>
+            <div style={{ fontSize: 13, fontWeight: 700, color: "#1a1a2e" }}>穿搭秀</div>
+            <div style={{ fontSize: 10, color: "#94a3b8", marginTop: 2 }}>答题换装</div>
           </button>
         </div>
 
