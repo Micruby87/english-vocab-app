@@ -2,9 +2,11 @@ import { useState, useEffect, useCallback } from "react";
 import { ArrowLeft, Volume2, Star, RotateCcw, Heart, Check } from "lucide-react";
 import { vocabulary } from "../data/vocabulary";
 import { gradeNames } from "../data/vocabulary";
+import { phonetics } from "../data/phonetics";
+import type { Phonetic } from "../data/phonetics";
 import { speak } from "../utils/speak";
 
-type GameMode = "word" | "phonetic";
+type GameMode = "word" | "phonetic" | "symbols";
 
 interface SpellingGameProps {
   onBack: () => void;
@@ -25,6 +27,9 @@ export default function SpellingGame({ onBack }: SpellingGameProps) {
   const [bestScore, setBestScore] = useState(0);
   const [phoneticOptions, setPhoneticOptions] = useState<string[]>([]);
   const [selectedPhonetic, setSelectedPhonetic] = useState<string | null>(null);
+  const [symbolQuestions, setSymbolQuestions] = useState<Phonetic[]>([]);
+  const [symbolOptions, setSymbolOptions] = useState<string[]>([]);
+  const [symbolCategory, setSymbolCategory] = useState<string | null>(null);
 
   const generatePhoneticOptions = useCallback((correctPhonetic: string, gradeNum: number) => {
     const pool = vocabulary
@@ -34,6 +39,37 @@ export default function SpellingGame({ onBack }: SpellingGameProps) {
     const shuffled = unique.sort(() => Math.random() - 0.5).slice(0, 3);
     return [...shuffled, correctPhonetic].sort(() => Math.random() - 0.5);
   }, []);
+
+  const generateSymbolOptions = useCallback((correct: Phonetic, pool: Phonetic[]) => {
+    const others = pool
+      .filter((p) => p.symbol !== correct.symbol)
+      .sort(() => Math.random() - 0.5)
+      .slice(0, 3)
+      .map((p) => p.symbol);
+    return [...others, correct.symbol].sort(() => Math.random() - 0.5);
+  }, []);
+
+  const startSymbolGame = useCallback((cat: string) => {
+    const pool = cat === "all" ? phonetics : phonetics.filter((p) => p.type === cat);
+    const shuffled = [...pool].sort(() => Math.random() - 0.5).slice(0, 12);
+    setSymbolQuestions(shuffled);
+    setCurrentIndex(0);
+    setInput("");
+    setLives(3);
+    setScore(0);
+    setStreak(0);
+    setGameOver(false);
+    setResult(null);
+    setSelectedPhonetic(null);
+    setSymbolCategory(cat);
+    setGrade(-1);
+    if (shuffled.length > 0) {
+      setSymbolOptions(generateSymbolOptions(shuffled[0], pool));
+    }
+    const saved = localStorage.getItem(`symbolGame_best_${cat}`);
+    if (saved) setBestScore(parseInt(saved));
+    else setBestScore(0);
+  }, [generateSymbolOptions]);
 
   const startGame = useCallback((g: number) => {
     const gradeWords = vocabulary.filter((w) => w.grade === g);
@@ -58,25 +94,49 @@ export default function SpellingGame({ onBack }: SpellingGameProps) {
     else setBestScore(0);
   }, [mode, generatePhoneticOptions]);
 
+  const currentSymbol = symbolQuestions[currentIndex];
+
   const currentWord = words[currentIndex];
 
   useEffect(() => {
-    if (currentWord && result === null) {
+    if (mode === "symbols" && currentSymbol && result === null) {
+      speak(currentSymbol.exampleWord);
+    } else if (currentWord && result === null) {
       speak(currentWord.english);
     }
-  }, [currentIndex, currentWord, result]);
+  }, [currentIndex, currentWord, currentSymbol, result, mode]);
 
   const saveBest = useCallback(() => {
-    if (grade !== null && score > bestScore) {
-      const storageKey = mode === "phonetic" ? `phoneticGame_best_${grade}` : `spellingGame_best_${grade}`;
+    if (score > bestScore) {
+      let storageKey: string;
+      if (mode === "symbols") storageKey = `symbolGame_best_${symbolCategory}`;
+      else if (mode === "phonetic") storageKey = `phoneticGame_best_${grade}`;
+      else storageKey = `spellingGame_best_${grade}`;
       localStorage.setItem(storageKey, score.toString());
       setBestScore(score);
     }
-  }, [grade, score, bestScore, mode]);
+  }, [grade, score, bestScore, mode, symbolCategory]);
 
   const handleSubmit = () => {
     if (!currentWord || result !== null) return;
     const correct = input.trim().toLowerCase() === currentWord.english.toLowerCase();
+    if (correct) {
+      setResult("correct");
+      const newStreak = streak + 1;
+      setStreak(newStreak);
+      const points = 10 + (newStreak > 1 ? newStreak * 2 : 0);
+      setScore((s) => s + points);
+    } else {
+      setResult("wrong");
+      setStreak(0);
+      setLives((l) => l - 1);
+    }
+  };
+
+  const handleSymbolSelect = (selected: string) => {
+    if (!currentSymbol || selectedPhonetic !== null) return;
+    setSelectedPhonetic(selected);
+    const correct = selected === currentSymbol.symbol;
     if (correct) {
       setResult("correct");
       const newStreak = streak + 1;
@@ -113,7 +173,8 @@ export default function SpellingGame({ onBack }: SpellingGameProps) {
       saveBest();
       return;
     }
-    if (currentIndex + 1 >= words.length) {
+    const totalLen = mode === "symbols" ? symbolQuestions.length : words.length;
+    if (currentIndex + 1 >= totalLen) {
       setGameOver(true);
       saveBest();
       return;
@@ -124,7 +185,10 @@ export default function SpellingGame({ onBack }: SpellingGameProps) {
     setResult(null);
     setShowHint(false);
     setSelectedPhonetic(null);
-    if (mode === "phonetic" && grade !== null) {
+    if (mode === "symbols" && symbolCategory !== null) {
+      const pool = symbolCategory === "all" ? phonetics : phonetics.filter((p) => p.type === symbolCategory);
+      setSymbolOptions(generateSymbolOptions(symbolQuestions[nextIndex], pool));
+    } else if (mode === "phonetic" && grade !== null) {
       setPhoneticOptions(generatePhoneticOptions(words[nextIndex].phonetic, grade));
     }
   };
@@ -136,7 +200,7 @@ export default function SpellingGame({ onBack }: SpellingGameProps) {
     }
   };
 
-  const goToModeSelect = () => { setMode(null); setGrade(null); };
+  const goToModeSelect = () => { setMode(null); setGrade(null); setSymbolCategory(null); };
 
   // Mode selection
   if (mode === null) {
@@ -188,6 +252,77 @@ export default function SpellingGame({ onBack }: SpellingGameProps) {
               <div style={{ fontSize: 13, color: "#94a3b8", marginTop: 3 }}>听发音，看单词，选出正确音标</div>
             </div>
           </button>
+          <button onClick={() => setMode("symbols")} style={{
+            background: "#fff", border: "none", borderRadius: 18, padding: "24px 20px",
+            boxShadow: "0 2px 10px rgba(0,0,0,0.06)", textAlign: "left",
+            display: "flex", alignItems: "center", gap: 16,
+          }}>
+            <div style={{
+              width: 56, height: 56, borderRadius: 16,
+              background: "linear-gradient(135deg, #10b981, #059669)",
+              display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0,
+            }}>
+              <span style={{ fontSize: 28 }}>🎯</span>
+            </div>
+            <div>
+              <div style={{ fontSize: 17, fontWeight: 700, color: "#1a1a2e" }}>48音标符号</div>
+              <div style={{ fontSize: 13, color: "#94a3b8", marginTop: 3 }}>听例词发音，选出对应的音标符号</div>
+            </div>
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // Symbols category selection
+  if (mode === "symbols" && grade === null) {
+    return (
+      <div style={{ minHeight: "100dvh", background: "#f0f2f5" }}>
+        <div style={{
+          background: "linear-gradient(135deg, #10b981 0%, #059669 100%)",
+          borderRadius: "0 0 28px 28px",
+          padding: "48px 20px 28px",
+        }}>
+          <button onClick={goToModeSelect} style={{ background: "rgba(255,255,255,0.2)", border: "none", borderRadius: 12, padding: "8px 12px", marginBottom: 16 }}>
+            <ArrowLeft style={{ width: 20, height: 20, color: "#fff" }} />
+          </button>
+          <h1 style={{ fontSize: 24, fontWeight: 800, color: "#fff", margin: 0 }}>🎯 48音标符号</h1>
+          <p style={{ color: "rgba(255,255,255,0.8)", fontSize: 14, marginTop: 6 }}>听例词发音，选出对应的音标符号！</p>
+        </div>
+        <div style={{ padding: 20, display: "flex", flexDirection: "column", gap: 12 }}>
+          <button onClick={() => startSymbolGame("all")} style={{
+            background: "#fff", border: "none", borderRadius: 16, padding: "20px",
+            boxShadow: "0 2px 8px rgba(0,0,0,0.06)", textAlign: "left",
+            display: "flex", alignItems: "center", gap: 16,
+          }}>
+            <div style={{ fontSize: 36 }}>🎲</div>
+            <div>
+              <div style={{ fontSize: 17, fontWeight: 700, color: "#1a1a2e" }}>全部音标</div>
+              <div style={{ fontSize: 13, color: "#94a3b8", marginTop: 2 }}>48个音标随机出题</div>
+            </div>
+          </button>
+          <button onClick={() => startSymbolGame("vowel")} style={{
+            background: "#fff", border: "none", borderRadius: 16, padding: "20px",
+            boxShadow: "0 2px 8px rgba(0,0,0,0.06)", textAlign: "left",
+            display: "flex", alignItems: "center", gap: 16,
+          }}>
+            <div style={{ fontSize: 36 }}>🅰️</div>
+            <div>
+              <div style={{ fontSize: 17, fontWeight: 700, color: "#1a1a2e" }}>元音（20个）</div>
+              <div style={{ fontSize: 13, color: "#94a3b8", marginTop: 2 }}>长元音 · 短元音 · 双元音</div>
+            </div>
+          </button>
+          <button onClick={() => startSymbolGame("consonant")} style={{
+            background: "#fff", border: "none", borderRadius: 16, padding: "20px",
+            boxShadow: "0 2px 8px rgba(0,0,0,0.06)", textAlign: "left",
+            display: "flex", alignItems: "center", gap: 16,
+          }}>
+            <div style={{ fontSize: 36 }}>🅱️</div>
+            <div>
+              <div style={{ fontSize: 17, fontWeight: 700, color: "#1a1a2e" }}>辅音（28个）</div>
+              <div style={{ fontSize: 13, color: "#94a3b8", marginTop: 2 }}>爆破音 · 摩擦音 · 破擦音 · 鼻音 ...</div>
+            </div>
+          </button>
         </div>
       </div>
     );
@@ -236,14 +371,22 @@ export default function SpellingGame({ onBack }: SpellingGameProps) {
   }
 
   const isPhonetic = mode === "phonetic";
-  const gradientStyle = isPhonetic
+  const isSymbols = mode === "symbols";
+  const gradientStyle = isSymbols
+    ? "linear-gradient(135deg, #10b981, #059669)"
+    : isPhonetic
     ? "linear-gradient(135deg, #f59e0b, #ef4444)"
     : "linear-gradient(135deg, #3b82f6, #6366f1)";
+  const accentColor = isSymbols ? "#10b981" : isPhonetic ? "#f59e0b" : "#3b82f6";
+  const totalLen = isSymbols ? symbolQuestions.length : words.length;
 
   // Game over
   if (gameOver) {
-    const total = words.length;
     const answered = currentIndex + (result !== null ? 1 : 0);
+    const handleReplay = () => {
+      if (isSymbols && symbolCategory) startSymbolGame(symbolCategory);
+      else if (grade !== null && grade > 0) startGame(grade);
+    };
     return (
       <div style={{ minHeight: "100dvh", background: gradientStyle, display: "flex", alignItems: "center", justifyContent: "center" }}>
         <div style={{ background: "#fff", borderRadius: 24, padding: "40px 28px", textAlign: "center", margin: 20, width: "100%", maxWidth: 360 }}>
@@ -252,20 +395,20 @@ export default function SpellingGame({ onBack }: SpellingGameProps) {
             {lives > 0 ? "全部完成！" : "挑战结束"}
           </h2>
           <p style={{ color: "#64748b", fontSize: 14, margin: "0 0 24px" }}>
-            答对了 {Math.min(score > 0 ? answered : answered - 1, total)} 题中的大部分
+            答对了 {Math.min(score > 0 ? answered : answered - 1, totalLen)} 题中的大部分
           </p>
           <div style={{ display: "flex", justifyContent: "center", gap: 24, marginBottom: 28 }}>
             <div>
-              <div style={{ fontSize: 28, fontWeight: 800, color: isPhonetic ? "#f59e0b" : "#3b82f6" }}>{score}</div>
+              <div style={{ fontSize: 28, fontWeight: 800, color: accentColor }}>{score}</div>
               <div style={{ fontSize: 12, color: "#94a3b8" }}>得分</div>
             </div>
             <div>
-              <div style={{ fontSize: 28, fontWeight: 800, color: isPhonetic ? "#ef4444" : "#6366f1" }}>{bestScore < score ? score : bestScore}</div>
+              <div style={{ fontSize: 28, fontWeight: 800, color: accentColor }}>{bestScore < score ? score : bestScore}</div>
               <div style={{ fontSize: 12, color: "#94a3b8" }}>最高分</div>
             </div>
           </div>
           <div style={{ display: "flex", gap: 12 }}>
-            <button onClick={() => startGame(grade)} style={{
+            <button onClick={handleReplay} style={{
               flex: 1, background: gradientStyle, color: "#fff",
               border: "none", borderRadius: 14, padding: "14px", fontSize: 15, fontWeight: 700,
             }}>
@@ -283,7 +426,8 @@ export default function SpellingGame({ onBack }: SpellingGameProps) {
     );
   }
 
-  if (!currentWord) return null;
+  if (isSymbols && !currentSymbol) return null;
+  if (!isSymbols && !currentWord) return null;
 
   // Game UI
   return (
@@ -302,7 +446,7 @@ export default function SpellingGame({ onBack }: SpellingGameProps) {
             background: "rgba(255,255,255,0.2)", borderRadius: 12, padding: "3px 10px",
             fontSize: 12, fontWeight: 600, color: "#fff",
           }}>
-            {isPhonetic ? "🔤 音标" : "✏️ 拼写"}
+            {isSymbols ? "🎯 音标符号" : isPhonetic ? "🔤 音标" : "✏️ 拼写"}
           </div>
           <div style={{ display: "flex", alignItems: "center", gap: 3, color: "#fff" }}>
             {Array.from({ length: 3 }).map((_, i) => (
@@ -320,14 +464,14 @@ export default function SpellingGame({ onBack }: SpellingGameProps) {
       <div style={{ padding: "12px 16px 0" }}>
         <div style={{ background: "#e2e8f0", borderRadius: 8, height: 6, overflow: "hidden" }}>
           <div style={{
-            background: isPhonetic ? "linear-gradient(90deg, #f59e0b, #ef4444)" : "linear-gradient(90deg, #3b82f6, #6366f1)",
+            background: isSymbols ? "linear-gradient(90deg, #10b981, #059669)" : isPhonetic ? "linear-gradient(90deg, #f59e0b, #ef4444)" : "linear-gradient(90deg, #3b82f6, #6366f1)",
             height: "100%", borderRadius: 8,
-            width: `${((currentIndex) / words.length) * 100}%`,
+            width: `${((currentIndex) / totalLen) * 100}%`,
             transition: "width 0.3s",
           }} />
         </div>
         <div style={{ fontSize: 12, color: "#94a3b8", textAlign: "center", marginTop: 6 }}>
-          第 {currentIndex + 1} / {words.length} 题
+          第 {currentIndex + 1} / {totalLen} 题
         </div>
       </div>
 
@@ -339,18 +483,83 @@ export default function SpellingGame({ onBack }: SpellingGameProps) {
         }}>
           {/* Play button */}
           <button
-            onClick={() => speak(currentWord.english)}
+            onClick={() => speak(isSymbols ? currentSymbol!.exampleWord : currentWord!.english)}
             style={{
               background: gradientStyle,
               border: "none", borderRadius: "50%", width: 64, height: 64,
               display: "flex", alignItems: "center", justifyContent: "center",
-              margin: "0 auto 20px", boxShadow: isPhonetic ? "0 4px 16px rgba(245,158,11,0.3)" : "0 4px 16px rgba(99,102,241,0.3)",
+              margin: "0 auto 20px", boxShadow: `0 4px 16px rgba(0,0,0,0.15)`,
             }}
           >
             <Volume2 style={{ width: 28, height: 28, color: "#fff" }} />
           </button>
 
-          {isPhonetic ? (
+          {isSymbols && currentSymbol ? (
+            <>
+              {/* Symbols mode: show example word, ask for phonetic symbol */}
+              <div style={{ fontSize: 26, fontWeight: 800, color: "#1a1a2e", marginBottom: 4 }}>
+                {currentSymbol.exampleWord}
+              </div>
+              <div style={{ fontSize: 14, color: "#94a3b8", marginBottom: 4 }}>
+                {currentSymbol.exampleChinese}
+              </div>
+              <div style={{
+                display: "inline-block", background: "#ecfdf5", borderRadius: 8,
+                padding: "3px 10px", fontSize: 12, color: "#059669", fontWeight: 600, marginBottom: 16,
+              }}>
+                {currentSymbol.category}
+              </div>
+              <div style={{ fontSize: 15, fontWeight: 600, color: "#64748b", marginBottom: 14 }}>
+                这个例词包含哪个音标？
+              </div>
+
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+                {symbolOptions.map((opt) => {
+                  const isCorrectOpt = opt === currentSymbol.symbol;
+                  const isSelectedOpt = selectedPhonetic === opt;
+                  let bg = "#f8fafc";
+                  let border = "2px solid #e2e8f0";
+                  let color = "#1a1a2e";
+                  if (selectedPhonetic !== null) {
+                    if (isCorrectOpt) { bg = "#f0fdf4"; border = "2px solid #10b981"; color = "#059669"; }
+                    else if (isSelectedOpt) { bg = "#fef2f2"; border = "2px solid #ef4444"; color = "#dc2626"; }
+                  }
+                  return (
+                    <button key={opt} onClick={() => handleSymbolSelect(opt)} disabled={selectedPhonetic !== null}
+                      style={{ background: bg, border, borderRadius: 14, padding: "14px 8px", textAlign: "center", transition: "all 0.2s" }}>
+                      <div style={{ fontSize: 20, fontWeight: 700, color }}>{opt}</div>
+                      {selectedPhonetic !== null && isCorrectOpt && <div style={{ fontSize: 11, color: "#10b981", marginTop: 3 }}>✓ 正确</div>}
+                      {selectedPhonetic !== null && isSelectedOpt && !isCorrectOpt && <div style={{ fontSize: 11, color: "#ef4444", marginTop: 3 }}>✗ 错误</div>}
+                    </button>
+                  );
+                })}
+              </div>
+
+              {result === "correct" && (
+                <div style={{ marginTop: 14, display: "flex", alignItems: "center", justifyContent: "center", gap: 6, color: "#059669", fontWeight: 700 }}>
+                  <Check style={{ width: 18, height: 18 }} /> 正确！{streak > 1 && `连对 ${streak} 题 🔥`}
+                </div>
+              )}
+              {result === "wrong" && (
+                <div style={{ marginTop: 14 }}>
+                  <div style={{ color: "#dc2626", fontWeight: 700, marginBottom: 4 }}>正确答案：</div>
+                  <div style={{ fontSize: 24, fontWeight: 800, color: "#10b981" }}>{currentSymbol.symbol}</div>
+                  <div style={{ fontSize: 12, color: "#94a3b8", marginTop: 4 }}>{currentSymbol.tip}</div>
+                </div>
+              )}
+
+              {result !== null && (
+                <div style={{ marginTop: 16 }}>
+                  <button onClick={handleNext} style={{
+                    width: "100%", background: gradientStyle, color: "#fff",
+                    border: "none", borderRadius: 12, padding: "14px", fontSize: 15, fontWeight: 700,
+                  }}>
+                    {currentIndex + 1 >= symbolQuestions.length || (lives <= 0 && result === "wrong") ? "查看结果" : "下一题 →"}
+                  </button>
+                </div>
+              )}
+            </>
+          ) : isPhonetic && currentWord ? (
             <>
               {/* Phonetic mode: show English word, ask for phonetic */}
               <div style={{ fontSize: 28, fontWeight: 800, color: "#1a1a2e", marginBottom: 4 }}>
