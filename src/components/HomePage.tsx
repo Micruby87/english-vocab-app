@@ -198,6 +198,37 @@ export default function HomePage({ progress, onNavigate }: HomePageProps) {
           />
         </div>
 
+        {/* Fun Games Section */}
+        <div style={{ fontSize: 17, fontWeight: 800, color: "#1a1a2e", marginTop: 20, marginBottom: 10 }}>
+          🎮 趣味学习
+        </div>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 10 }}>
+          <button onClick={() => onNavigate("matchGame")} style={{
+            background: "#fff", border: "none", borderRadius: 16, padding: "16px 8px",
+            boxShadow: "0 1px 8px rgba(0,0,0,0.04)", textAlign: "center",
+          }}>
+            <div style={{ fontSize: 30, marginBottom: 6 }}>🧩</div>
+            <div style={{ fontSize: 13, fontWeight: 700, color: "#1a1a2e" }}>消消乐</div>
+            <div style={{ fontSize: 10, color: "#94a3b8", marginTop: 2 }}>配对挑战</div>
+          </button>
+          <button onClick={() => onNavigate("spellingGame")} style={{
+            background: "#fff", border: "none", borderRadius: 16, padding: "16px 8px",
+            boxShadow: "0 1px 8px rgba(0,0,0,0.04)", textAlign: "center",
+          }}>
+            <div style={{ fontSize: 30, marginBottom: 6 }}>✏️</div>
+            <div style={{ fontSize: 13, fontWeight: 700, color: "#1a1a2e" }}>拼写挑战</div>
+            <div style={{ fontSize: 10, color: "#94a3b8", marginTop: 2 }}>听音拼词</div>
+          </button>
+          <button onClick={() => onNavigate("emojiGame")} style={{
+            background: "#fff", border: "none", borderRadius: 16, padding: "16px 8px",
+            boxShadow: "0 1px 8px rgba(0,0,0,0.04)", textAlign: "center",
+          }}>
+            <div style={{ fontSize: 30, marginBottom: 6 }}>😄</div>
+            <div style={{ fontSize: 13, fontWeight: 700, color: "#1a1a2e" }}>猜单词</div>
+            <div style={{ fontSize: 10, color: "#94a3b8", marginTop: 2 }}>Emoji挑战</div>
+          </button>
+        </div>
+
         {/* Quick Start Banner */}
         <button
           onClick={() => onNavigate("learn")}

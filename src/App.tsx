@@ -7,6 +7,9 @@ import QuizPage from "./components/QuizPage";
 import ReviewPage from "./components/ReviewPage";
 import StatsPage from "./components/StatsPage";
 import PhonicsPage from "./components/PhonicsPage";
+import MatchGame from "./components/MatchGame";
+import SpellingGame from "./components/SpellingGame";
+import EmojiGame from "./components/EmojiGame";
 
 function App() {
   const [page, setPage] = useState("home");
@@ -38,6 +41,15 @@ function App() {
       )}
       {page === "phonics" && (
         <PhonicsPage onBack={goHome} />
+      )}
+      {page === "matchGame" && (
+        <MatchGame onBack={goHome} />
+      )}
+      {page === "spellingGame" && (
+        <SpellingGame onBack={goHome} />
+      )}
+      {page === "emojiGame" && (
+        <EmojiGame onBack={goHome} />
       )}
     </div>
   );
