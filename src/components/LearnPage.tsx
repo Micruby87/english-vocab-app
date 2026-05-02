@@ -43,6 +43,8 @@ export default function LearnPage({ progress, setProgress, onBack }: LearnPagePr
     }
     const updated = checkIn(progress, [wordId]);
     updated.currentGrade = selectedGrade;
+    // Award 3 gold coins for learning a new word
+    updated.gold = (updated.gold || 0) + 3;
     setProgress(updated);
     saveProgress(updated);
     handleNext();

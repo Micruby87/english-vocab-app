@@ -12,6 +12,7 @@ export interface UserProgress {
   totalDaysCheckedIn: number;
   consecutiveDays: number;
   lastCheckInDate: string;
+  gold: number; // Added gold property
 }
 
 const STORAGE_KEY = "english_vocab_progress";
@@ -24,13 +25,19 @@ const defaultProgress: UserProgress = {
   totalDaysCheckedIn: 0,
   consecutiveDays: 0,
   lastCheckInDate: "",
+  gold: 0, // Initialize gold to 0
 };
 
 export function getProgress(): UserProgress {
   try {
     const data = localStorage.getItem(STORAGE_KEY);
     if (data) {
-      return JSON.parse(data);
+      const parsedData: UserProgress = JSON.parse(data);
+      // Ensure gold property exists, if not, default to 0
+      if (parsedData.gold === undefined) {
+        parsedData.gold = 0;
+      }
+      return parsedData;
     }
   } catch (e) {
     console.error("Failed to load progress:", e);

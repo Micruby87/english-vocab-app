@@ -54,6 +54,7 @@ export default function QuizPage({ progress, setProgress, onBack }: QuizPageProp
   const [correctCount, setCorrectCount] = useState(0);
   const [answeredIds, setAnsweredIds] = useState<number[]>([]);
   const [wrongIds, setWrongIds] = useState<number[]>([]);
+  const [goldEarned, setGoldEarned] = useState(0);
 
   const startQuiz = (grade: number) => {
     const gradeWords = vocabulary.filter((w) => w.grade === grade);
@@ -65,6 +66,7 @@ export default function QuizPage({ progress, setProgress, onBack }: QuizPageProp
     setCorrectCount(0);
     setAnsweredIds([]);
     setWrongIds([]);
+    setGoldEarned(0);
     setSelectedGrade(grade);
     setMode("quiz");
   };
@@ -87,8 +89,13 @@ export default function QuizPage({ progress, setProgress, onBack }: QuizPageProp
         setSelectedAnswer(null);
       } else {
         setMode("result");
-        if (answeredIds.length > 0) {
-          const updated = markMastered(progress, [...answeredIds, ...(isCorrect ? [question.word.id] : [])]);
+        const finalAnsweredIds = [...answeredIds, ...(isCorrect ? [question.word.id] : [])];
+        if (finalAnsweredIds.length > 0) {
+          const updated = markMastered(progress, finalAnsweredIds);
+          // Calculate gold reward based on correct answers
+          const goldReward = finalAnsweredIds.length * 10; // 10 gold per correct answer
+          setGoldEarned(goldReward);
+          updated.gold = (updated.gold || 0) + goldReward;
           setProgress(updated);
           saveProgress(updated);
         }
@@ -158,7 +165,7 @@ export default function QuizPage({ progress, setProgress, onBack }: QuizPageProp
             <Trophy style={{ width: 56, height: 56, color: trophyColor, margin: "0 auto 16px" }} />
             <div style={{ fontSize: 52, fontWeight: 800, color: "#1a1a2e", lineHeight: 1 }}>{score}</div>
             <div style={{ fontSize: 14, color: "#94a3b8", marginBottom: 20 }}>分</div>
-            <div style={{ display: "flex", justifyContent: "center", gap: 40 }}>
+            <div style={{ display: "flex", justifyContent: "center", gap: 28 }}>
               <div>
                 <div style={{ fontSize: 28, fontWeight: 800, color: "#10b981" }}>{correctCount}</div>
                 <div style={{ fontSize: 12, color: "#94a3b8" }}>正确</div>
@@ -166,6 +173,10 @@ export default function QuizPage({ progress, setProgress, onBack }: QuizPageProp
               <div>
                 <div style={{ fontSize: 28, fontWeight: 800, color: "#ef4444" }}>{total - correctCount}</div>
                 <div style={{ fontSize: 12, color: "#94a3b8" }}>错误</div>
+              </div>
+              <div>
+                <div style={{ fontSize: 28, fontWeight: 800, color: "#f59e0b" }}>+{goldEarned}</div>
+                <div style={{ fontSize: 12, color: "#94a3b8" }}>💰 金币</div>
               </div>
             </div>
             <div style={{ marginTop: 20, fontSize: 14, color: "#64748b" }}>

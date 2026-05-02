@@ -5,6 +5,7 @@ import { gradeNames } from "../data/vocabulary";
 import { phonetics } from "../data/phonetics";
 import type { Phonetic } from "../data/phonetics";
 import { speak } from "../utils/speak";
+import { getProgress, saveProgress } from "../utils/storage";
 
 type GameMode = "word" | "phonetic" | "symbols";
 
@@ -115,6 +116,11 @@ export default function SpellingGame({ onBack }: SpellingGameProps) {
       localStorage.setItem(storageKey, score.toString());
       setBestScore(score);
     }
+    // Award gold coins based on score
+    const goldReward = Math.floor(score / 10); // 1 gold per 10 points
+    const progress = getProgress();
+    progress.gold = (progress.gold || 0) + goldReward;
+    saveProgress(progress);
   }, [grade, score, bestScore, mode, symbolCategory]);
 
   const handleSubmit = () => {

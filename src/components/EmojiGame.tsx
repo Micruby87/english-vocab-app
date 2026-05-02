@@ -3,6 +3,7 @@ import { ArrowLeft, Star, RotateCcw, Zap } from "lucide-react";
 import { emojiWords } from "../data/emojiWords";
 import { gradeNames } from "../data/vocabulary";
 import { speak } from "../utils/speak";
+import { getProgress, saveProgress } from "../utils/storage";
 
 interface EmojiGameProps {
   onBack: () => void;
@@ -77,6 +78,11 @@ export default function EmojiGame({ onBack }: EmojiGameProps) {
           localStorage.setItem(`emojiGame_best_${grade}`, finalScore.toString());
           setBestScore(finalScore);
         }
+        // Award gold coins
+        const goldReward = Math.floor(finalScore / 10); // 1 gold per 10 points
+        const progress = getProgress();
+        progress.gold = (progress.gold || 0) + goldReward;
+        saveProgress(progress);
       } else {
         const nextIndex = currentIndex + 1;
         setCurrentIndex(nextIndex);

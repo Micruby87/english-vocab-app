@@ -196,6 +196,13 @@ export default function HomePage({ progress, onNavigate }: HomePageProps) {
             desc="查看学习数据"
             onClick={() => onNavigate("stats")}
           />
+          <FeatureCard
+            icon={<Trophy style={{ width: 26, height: 26, color: "#fff" }} />}
+            gradient="linear-gradient(135deg, #fbbf24, #f59e0b)"
+            title="金币商店"
+            desc="购买道具与装扮"
+            onClick={() => onNavigate("goldShop")}
+          />
         </div>
 
         {/* Fun Games Section */}
@@ -242,6 +249,14 @@ export default function HomePage({ progress, onNavigate }: HomePageProps) {
             <div style={{ fontSize: 30, marginBottom: 6 }}>👗</div>
             <div style={{ fontSize: 13, fontWeight: 700, color: "#1a1a2e" }}>穿搭秀</div>
             <div style={{ fontSize: 10, color: "#94a3b8", marginTop: 2 }}>答题换装</div>
+          </button>
+          <button onClick={() => onNavigate("leaderboard")} style={{
+            background: "#fff", border: "none", borderRadius: 16, padding: "16px 8px",
+            boxShadow: "0 1px 8px rgba(0,0,0,0.04)", textAlign: "center",
+          }}>
+            <div style={{ fontSize: 30, marginBottom: 6 }}>🏆</div>
+            <div style={{ fontSize: 13, fontWeight: 700, color: "#1a1a2e" }}>排行榜</div>
+            <div style={{ fontSize: 10, color: "#94a3b8", marginTop: 2 }}>查看强者</div>
           </button>
         </div>
 

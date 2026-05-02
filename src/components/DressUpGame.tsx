@@ -2,6 +2,7 @@ import { useState, useCallback, useEffect } from "react";
 import { ArrowLeft, Heart, Sparkles, RotateCcw } from "lucide-react";
 import { vocabulary, gradeNames } from "../data/vocabulary";
 import { speak } from "../utils/speak";
+import { getProgress, saveProgress } from "../utils/storage";
 
 interface DressUpGameProps {
   onBack: () => void;
@@ -198,6 +199,11 @@ export default function DressUpGame({ onBack }: DressUpGameProps) {
         const newCompleted = [...new Set([...completedThemes, theme.name])];
         setCompletedThemes(newCompleted);
         localStorage.setItem("dressup_completed", JSON.stringify(newCompleted));
+        // Award gold coins for completing a theme
+        const goldReward = 30; // 30 gold for completing a theme
+        const progress = getProgress();
+        progress.gold = (progress.gold || 0) + goldReward;
+        saveProgress(progress);
         return;
       }
       setCurrentSlot(nextSlot);

@@ -2,6 +2,8 @@ import { useState, useCallback, useEffect } from "react";
 import { ArrowLeft, Heart, Zap, Shield, Swords } from "lucide-react";
 import { vocabulary, gradeNames } from "../data/vocabulary";
 import { speak } from "../utils/speak";
+import { getProgress, saveProgress } from "../utils/storage"; // Import storage functions
+import { submitScore } from "../utils/api"; // Import submitScore for leaderboard
 
 interface BattleGameProps {
   onBack: () => void;
@@ -94,6 +96,17 @@ export default function BattleGame({ onBack }: BattleGameProps) {
   const [shakeMonster, setShakeMonster] = useState(false);
   const [shakePlayer, setShakePlayer] = useState(false);
   const [gold, setGold] = useState(0);
+
+  // Effect to save gold whenever it changes
+  useEffect(() => {
+    const currentProgress = getProgress();
+    if (currentProgress.gold !== gold) {
+      saveProgress({ ...currentProgress, gold });
+    }
+  }, [gold]);
+
+
+
   const [showLevelUp, setShowLevelUp] = useState(false);
   const [gradeWords, setGradeWords] = useState<typeof vocabulary>([]);
 
@@ -105,7 +118,8 @@ export default function BattleGame({ onBack }: BattleGameProps) {
     setPlayerHp(100);
     setStreak(0);
     setGameOver(false);
-    setGold(0);
+    const initialProgress = getProgress();
+    setGold(initialProgress.gold);
     setSelected(null);
     setResult(null);
     setShowLevelUp(false);
@@ -163,6 +177,15 @@ export default function BattleGame({ onBack }: BattleGameProps) {
       if (level > bestLevel) {
         localStorage.setItem(`battleGame_best_${grade}`, level.toString());
         setBestLevel(level);
+      }
+      // Submit score to leaderboard if gold or level is significant
+      if (gold > 0 || level > 1) {
+        let playerName = localStorage.getItem("player_name");
+        if (!playerName) {
+          playerName = window.prompt("游戏结束！请输入你的名字以提交排行榜：") || "匿名玩家";
+          localStorage.setItem("player_name", playerName);
+        }
+        submitScore({ name: playerName, score: gold, level: level });
       }
       return;
     }
@@ -301,7 +324,7 @@ export default function BattleGame({ onBack }: BattleGameProps) {
             background: "rgba(255,255,255,0.1)", borderRadius: 10, padding: "4px 10px",
             fontSize: 13, fontWeight: 700, color: "#fbbf24", display: "flex", alignItems: "center", gap: 4,
           }}>
-            🪙 {gold}
+            💰 {gold}
           </div>
         </div>
       </div>

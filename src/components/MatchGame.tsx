@@ -3,6 +3,7 @@ import { ArrowLeft, Clock, Star, RotateCcw, Zap } from "lucide-react";
 import { vocabulary } from "../data/vocabulary";
 import { gradeNames } from "../data/vocabulary";
 import { speak } from "../utils/speak";
+import { getProgress, saveProgress } from "../utils/storage";
 
 interface MatchGameProps {
   onBack: () => void;
@@ -70,6 +71,11 @@ export default function MatchGame({ onBack }: MatchGameProps) {
         localStorage.setItem(`matchGame_best_${grade}`, score.toString());
         setBestScore(score);
       }
+      // Award gold coins based on score
+      const goldReward = Math.floor(score / 10); // 1 gold per 10 points
+      const progress = getProgress();
+      progress.gold = (progress.gold || 0) + goldReward;
+      saveProgress(progress);
     }
   }, [matchedCount, totalPairs, grade, score, bestScore]);
 

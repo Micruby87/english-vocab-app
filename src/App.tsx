@@ -12,6 +12,8 @@ import SpellingGame from "./components/SpellingGame";
 import EmojiGame from "./components/EmojiGame";
 import BattleGame from "./components/BattleGame";
 import DressUpGame from "./components/DressUpGame";
+import GoldShop from "./components/GoldShop"; // Import GoldShop
+import LeaderboardPage from "./components/LeaderboardPage"; // Import LeaderboardPage
 
 function App() {
   const [page, setPage] = useState("home");
@@ -58,6 +60,12 @@ function App() {
       )}
       {page === "dressUpGame" && (
         <DressUpGame onBack={goHome} />
+      )}
+      {page === "goldShop" && (
+        <GoldShop onBack={goHome} />
+      )}
+      {page === "leaderboard" && (
+        <LeaderboardPage onBack={goHome} />
       )}
     </div>
   );
