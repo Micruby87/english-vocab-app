@@ -1,6 +1,6 @@
 // src/components/LeaderboardPage.tsx
 
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { ArrowLeft, Crown } from 'lucide-react';
 import { getLeaderboard } from '../utils/api';
 import type { LeaderboardEntry } from '../utils/api';

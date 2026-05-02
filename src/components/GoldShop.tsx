@@ -1,7 +1,6 @@
 import React from 'react';
 import { ArrowLeft } from 'lucide-react';
 import { getProgress, saveProgress } from '../utils/storage';
-import type { UserProgress } from '../utils/storage';
 
 interface GoldShopProps {
   onBack: () => void;
